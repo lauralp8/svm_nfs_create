@@ -746,16 +746,22 @@ def export_policies(svm_config):
         print(f"\n[*] Creating export policy on SVM: {svm_name}")
         print(f"[*] Export policy name: {policy_name}")
         
-        # Crear objeto Export Policy
-        export_policy = ExportPolicy()
-        export_policy.name = policy_name
-        export_policy.svm = {'name': svm_name}
-        
-        # Crear la export policy
-        print(f"[*] Creating export policy...")
-        export_policy.post()
-        
-        print(f"[+] Export policy created successfully!")
+        # Verificar si la export policy ya existe
+        existing_policy = ExportPolicy.find(name=policy_name, **{'svm.name': svm_name})
+        if existing_policy:
+            print(f"[WARNING] Export policy '{policy_name}' already exists on SVM '{svm_name}'")
+            print(f"[*] Skipping creation and proceeding with GET...")
+        else:
+            # Crear objeto Export Policy
+            export_policy = ExportPolicy()
+            export_policy.name = policy_name
+            export_policy.svm = {'name': svm_name}
+            
+            # Crear la export policy
+            print(f"[*] Creating export policy...")
+            export_policy.post(hydrate=True)
+            
+            print(f"[+] Export policy created successfully!")
         
         # GET: Obtener datos reales de las export policies desde la cabina
         print(f"[*] Retrieving export policies from cluster...")
