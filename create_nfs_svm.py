@@ -29,7 +29,7 @@ Version: 1.0.0
 # IMPORTS
 # ============================================================================
 from netapp_ontap import config, HostConnection, NetAppRestError
-from netapp_ontap.resources import Cluster, Svm, IpInterface, EmsEvent, NfsService
+from netapp_ontap.resources import Cluster, Svm, IpInterface, EmsEvent, NfsService, ExportPolicy
 import yaml
 import json
 import os
@@ -723,6 +723,103 @@ def nfs_create(svm_config):
 
 
 # ============================================================================
+# EXPORT POLICY CREATION FUNCTION
+# ============================================================================
+
+def export_policies(svm_config):
+    """
+    Crea una export policy en la SVM según config.yaml
+    
+    Args:
+        svm_config: Diccionario con la configuración de la SVM del config.yaml
+    
+    Returns:
+        bool: True si se creó exitosamente, False si hubo error
+    """
+    try:
+        # Extraer nombre de la SVM del config
+        svm_name = svm_config.get('name')
+        
+        # Extraer nombre de la export policy del config.yaml
+        policy_name = svm_config.get('export_policy_name', 'default')
+        
+        print(f"\n[*] Creating export policy on SVM: {svm_name}")
+        print(f"[*] Export policy name: {policy_name}")
+        
+        # Crear objeto Export Policy
+        export_policy = ExportPolicy()
+        export_policy.name = policy_name
+        export_policy.svm = {'name': svm_name}
+        
+        # Crear la export policy
+        print(f"[*] Creating export policy...")
+        export_policy.post()
+        
+        print(f"[+] Export policy created successfully!")
+        
+        # GET: Obtener datos reales de las export policies desde la cabina
+        print(f"[*] Retrieving export policies from cluster...")
+        
+        # Obtener todas las export policies de la SVM
+        export_policies_list = []
+        policies = ExportPolicy.get_collection(svm={'name': svm_name})
+        
+        for policy in policies:
+            policy.get()
+            policy_data = {
+                'policy_name': policy.name if hasattr(policy, 'name') else 'N/A',
+                'policy_id': policy.id if hasattr(policy, 'id') else 'N/A',
+                'svm_name': svm_name
+            }
+            export_policies_list.append(policy_data)
+        
+        # Datos completos para el log
+        export_data = {
+            'vserver_name': svm_name,
+            'total_policies': len(export_policies_list),
+            'policies': export_policies_list
+        }
+        
+        # SHOW: Mostrar información como "vserver export-policy show -vserver <name>"
+        print(f"\n{'='*60}")
+        print(f"  Export Policy Show")
+        print(f"{'='*60}")
+        print(f"         Vserver Name: {svm_name}")
+        print(f"    Total Policies: {len(export_policies_list)}")
+        print(f"\n{'Policy Name':<30} {'Policy ID':<15}")
+        print(f"{'-'*30} {'-'*15}")
+        
+        for policy in export_policies_list:
+            print(f"{policy['policy_name']:<30} {str(policy['policy_id']):<15}")
+        
+        print(f"{'='*60}\n")
+        
+        # Guardar en log con timestamp
+        save_to_log('export_policies', export_data)
+        
+        return True
+    
+    # CONTROL DE ERRORES
+    except NetAppRestError as error:
+        print(f"[ERROR] NetApp API error during export policy creation")
+        print(f"[ERROR] HTTP Status: {error.status_code}")
+        
+        if error.status_code == 409:
+            print(f"[ERROR] Export policy '{policy_name}' may already exist on this SVM")
+        elif error.status_code == 400:
+            print(f"[ERROR] Bad request - Invalid parameters")
+        else:
+            print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+        
+        return False
+    
+    except Exception as e:
+        print(f"[ERROR] Unexpected error during export policy creation: {type(e).__name__}")
+        print(f"[ERROR] Details: {str(e)}")
+        return False
+
+
+# ============================================================================
 # EVENT LOG RETRIEVAL FUNCTION
 # ============================================================================
 
@@ -848,6 +945,13 @@ if nfs_create(config_data['svm']):
     print("\n[SUCCESS] NFS service creation completed!")
 else:
     print("\n[FAILED] NFS service creation failed")
+    exit(1)
+
+# Crear export policy
+if export_policies(config_data['svm']):
+    print("\n[SUCCESS] Export policy creation completed!")
+else:
+    print("\n[FAILED] Export policy creation failed")
     exit(1)
 
 # Obtener event logs de la cabina como backup
