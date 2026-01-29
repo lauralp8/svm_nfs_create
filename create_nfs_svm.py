@@ -728,4 +728,8 @@ else:
     print("\n[FAILED] Protocol configuration failed")
     exit(1)
 
-
+# Obtener event logs de la cabina como backup
+if get_event_logs(max_records=100):
+    print("\n[SUCCESS] Event logs backup completed!")
+else:
+    print("\n[WARNING] Event logs backup failed (non-critical)")
