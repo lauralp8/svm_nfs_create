@@ -1,0 +1,24 @@
+# ============================================================================
+# CONFIGURACIÓN PARA CREAR SVM CON SERVICIO NFS USANDO API REST DE ONTAP
+# ============================================================================
+
+# Configuración del clúster
+cluster:
+  host: cluster1.demo.netapp.com
+  username: admin
+  password: Netapp1!
+
+# Configuración de la SVM FCP
+svm: 
+  name: svm_1_cluster
+  ipspace: Default
+  aggregate: cluster1_01_SSD_1
+  language: c.utf_8
+  security_style: unix
+
+  # Parámetros de modificación
+  aggr_list:
+    - cluster1_01_SSD_1
+    - cluster1_02_SSD_1
+  is_space_reporting_logical: true
+  is_space_enforcement_logical: true
