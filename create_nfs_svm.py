@@ -29,7 +29,7 @@ Version: 1.0.0
 # IMPORTS
 # ============================================================================
 from netapp_ontap import config, HostConnection, NetAppRestError
-from netapp_ontap.resources import Cluster, Svm, FcpService, FcInterface, IpInterface, EmsEvent
+from netapp_ontap.resources import Cluster, Svm, IpInterface, EmsEvent, NfsService
 import yaml
 import json
 import os
@@ -483,9 +483,8 @@ def modify_svm(svm_config):
         print(f"[ERROR] Details: {str(e)}")
         return False
 
-
 # ============================================================================
-# NFS PROTOCOL CONFIGURATION FUNCTIONS
+# NFS PROTOCOL CONFIGURATION FUNCTION
 # ============================================================================
 
 def configure_protocols(svm_config):
@@ -605,6 +604,122 @@ def configure_protocols(svm_config):
         print(f"[ERROR] Details: {str(e)}")
         return False
 
+
+def nfs_create(svm_config):
+    """
+    Crea un servicio NFS en la SVM y lo configura con las versiones de protocolo desde config.yaml
+    
+    Args:
+        svm_config: Diccionario con la configuración de la SVM del config.yaml
+    
+    Returns:
+        bool: True si se creó exitosamente, False si hubo error
+    """
+    try:
+        # Extraer nombre de la SVM del config
+        svm_name = svm_config.get('name')
+        
+        # Extraer parámetros de versiones NFS del config.yaml
+        nfs_v3_enabled = svm_config.get('nfs_v3_enabled', True)
+        nfs_v40_enabled = svm_config.get('nfs_v40_enabled', True)
+        nfs_v41_enabled = svm_config.get('nfs_v41_enabled', True)
+        nfs_v41_pnfs_enabled = svm_config.get('nfs_v41_pnfs_enabled', True)
+        
+        print(f"\n[*] Creating NFS service on SVM: {svm_name}")
+        
+        # Crear objeto NFS service
+        nfs = NfsService()
+        nfs.svm = {'name': svm_name}
+        nfs.enabled = True
+        
+        # Configurar el protocolo NFS con las versiones especificadas
+        nfs.protocol = {}
+        nfs.protocol['v3_enabled'] = nfs_v3_enabled
+        nfs.protocol['v40_enabled'] = nfs_v40_enabled
+        nfs.protocol['v41_enabled'] = nfs_v41_enabled
+        
+        # Configurar pNFS (parallel NFS) para v4.1
+        if nfs_v41_enabled:
+            nfs.protocol['v41_features'] = {}
+            nfs.protocol['v41_features']['pnfs_enabled'] = nfs_v41_pnfs_enabled
+        
+        # Crear el servicio NFS
+        print(f"[*] Creating NFS service with the following configuration:")
+        print(f"    - NFSv3: {'enabled' if nfs_v3_enabled else 'disabled'}")
+        print(f"    - NFSv4.0: {'enabled' if nfs_v40_enabled else 'disabled'}")
+        print(f"    - NFSv4.1: {'enabled' if nfs_v41_enabled else 'disabled'}")
+        if nfs_v41_enabled:
+            print(f"    - NFSv4.1 pNFS: {'enabled' if nfs_v41_pnfs_enabled else 'disabled'}")
+        
+        nfs.post()
+        
+        print(f"[+] NFS service created successfully!")
+        
+        # GET: Obtener datos reales del servicio NFS desde la cabina
+        print(f"[*] Retrieving NFS service details from cluster...")
+        nfs_service = NfsService.find(svm={'name': svm_name})
+        if nfs_service:
+            nfs_service.get()
+            
+            # Extraer los datos para el show
+            nfs_data = {
+                'vserver_name': svm_name,
+                'enabled': nfs_service.enabled if hasattr(nfs_service, 'enabled') else 'N/A',
+                'state': nfs_service.state if hasattr(nfs_service, 'state') else 'N/A',
+                'svm_uuid': nfs_service.svm.uuid if hasattr(nfs_service.svm, 'uuid') else 'N/A',
+                'v3_enabled': 'N/A',
+                'v40_enabled': 'N/A',
+                'v41_enabled': 'N/A',
+                'v41_pnfs_enabled': 'N/A'
+            }
+            
+            # Extraer información del protocolo si está disponible
+            if hasattr(nfs_service, 'protocol') and nfs_service.protocol:
+                nfs_data['v3_enabled'] = nfs_service.protocol.v3_enabled if hasattr(nfs_service.protocol, 'v3_enabled') else 'N/A'
+                nfs_data['v40_enabled'] = nfs_service.protocol.v40_enabled if hasattr(nfs_service.protocol, 'v40_enabled') else 'N/A'
+                nfs_data['v41_enabled'] = nfs_service.protocol.v41_enabled if hasattr(nfs_service.protocol, 'v41_enabled') else 'N/A'
+                
+                if hasattr(nfs_service.protocol, 'v41_features') and nfs_service.protocol.v41_features:
+                    nfs_data['v41_pnfs_enabled'] = nfs_service.protocol.v41_features.pnfs_enabled if hasattr(nfs_service.protocol.v41_features, 'pnfs_enabled') else 'N/A'
+            
+            # SHOW: Mostrar información como "vserver nfs show -vserver <name>"
+            print(f"\n{'='*60}")
+            print(f"  NFS Service Show")
+            print(f"{'='*60}")
+            print(f"         Vserver Name: {nfs_data['vserver_name']}")
+            print(f"Administrative Status: {'up' if nfs_data['enabled'] else 'down'}")
+            print(f"                State: {nfs_data['state']}")
+            print(f"             NFSv3: {nfs_data['v3_enabled']}")
+            print(f"           NFSv4.0: {nfs_data['v40_enabled']}")
+            print(f"           NFSv4.1: {nfs_data['v41_enabled']}")
+            print(f"      NFSv4.1 pNFS: {nfs_data['v41_pnfs_enabled']}")
+            print(f"{'='*60}\n")
+            
+            # Guardar en log con timestamp
+            save_to_log('nfs_create', nfs_data)
+        else:
+            print(f"[WARNING] Could not retrieve NFS service details")
+        
+        return True
+    
+    # CONTROL DE ERRORES
+    except NetAppRestError as error:
+        print(f"[ERROR] NetApp API error during NFS creation")
+        print(f"[ERROR] HTTP Status: {error.status_code}")
+        
+        if error.status_code == 409:
+            print(f"[ERROR] NFS service may already exist on this SVM")
+        elif error.status_code == 400:
+            print(f"[ERROR] Bad request - Invalid parameters")
+        else:
+            print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+        
+        return False
+    
+    except Exception as e:
+        print(f"[ERROR] Unexpected error during NFS creation: {type(e).__name__}")
+        print(f"[ERROR] Details: {str(e)}")
+        return False
 
 
 # ============================================================================
@@ -726,6 +841,13 @@ if configure_protocols(config_data['svm']):
     print("\n[SUCCESS] Protocol configuration completed!")
 else:
     print("\n[FAILED] Protocol configuration failed")
+    exit(1)
+
+# Crear el servicio NFS en la SVM
+if nfs_create(config_data['svm']):
+    print("\n[SUCCESS] NFS service creation completed!")
+else:
+    print("\n[FAILED] NFS service creation failed")
     exit(1)
 
 # Obtener event logs de la cabina como backup

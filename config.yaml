@@ -31,3 +31,9 @@ svm:
     s3: false
     fcp: false
     iscsi: false
+
+  # Configuración del servicio NFS
+  nfs_v3_enabled: true
+  nfs_v40_enabled: true
+  nfs_v41_enabled: true
+  nfs_v41_pnfs_enabled: true
