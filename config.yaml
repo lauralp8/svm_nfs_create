@@ -27,7 +27,7 @@ svm:
   protocols:
     cifs: false
     nfs: true
-    ndmp: false
+    ndmp: true
     s3: false
-    fcp: true
-    iscsi: true
+    fcp: false
+    iscsi: false
