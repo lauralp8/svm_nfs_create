@@ -1,0 +1,16 @@
+{
+  "vserver_name": "svm_nfs_cluster1",
+  "total_policies": 2,
+  "policies": [
+    {
+      "policy_name": "default",
+      "policy_id": 335007449089,
+      "svm_name": "svm_nfs_cluster1"
+    },
+    {
+      "policy_name": "rhoso",
+      "policy_id": 335007449090,
+      "svm_name": "svm_nfs_cluster1"
+    }
+  ]
+}
