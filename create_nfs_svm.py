@@ -1133,8 +1133,12 @@ def network_interfaces_create(svm_config):
                 ip_interface.enabled = (lif_config['status_admin'] == 'up')
                 print(f"    - Status Admin: {lif_config['status_admin']}")
             
+            # DEBUG: Mostrar lo que se va a enviar a la API
+            print(f"\n[DEBUG] Parameters to send to API:")
+            print(f"[DEBUG] Object dict: {ip_interface.to_dict()}")
+            
             # Crear la LIF
-            print(f"[*] Creating network interface...")
+            print(f"\n[*] Creating network interface...")
             ip_interface.post(hydrate=True)
             
             print(f"[+] Network interface '{lif_name}' created successfully!")
