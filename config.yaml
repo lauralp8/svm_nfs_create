@@ -81,10 +81,11 @@ svm:
       home_port: e0c
       address: 192.168.0.141  
       netmask: 255.255.255.0
-      firewall_policy: data
       auto_revert: false
     
     # LIF 2: Interfaz de management
+    # NOTA: Las LIFs con service_policy NO necesitan failover_policy ni firewall_policy
+    # Estos parámetros se gestionan automáticamente por la service policy
     - name: UFCREATEYA
       service_policy: default-management
       address: 192.168.0.142  
@@ -93,6 +94,4 @@ svm:
       home_port: e0d
       broadcast_domain: Default
       status_admin: up
-      failover_policy: system-defined
-      firewall_policy: mgmt
       auto_revert: false

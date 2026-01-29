@@ -1091,17 +1091,19 @@ def network_interfaces_create(svm_config):
                 ip_interface.location['auto_revert'] = lif_config['auto_revert']
                 print(f"    - Auto Revert: {lif_config['auto_revert']}")
             
-            # Failover Policy
-            if 'failover_policy' in lif_config:
+            # Service Policy (para LIFs de management)
+            # IMPORTANTE: Si se usa service_policy, NO agregar failover manualmente
+            if 'service_policy' in lif_config:
+                ip_interface.service_policy = {'name': lif_config['service_policy']}
+                print(f"    - Service Policy: {lif_config['service_policy']}")
+            
+            # Failover Policy (SOLO para LIFs sin service_policy)
+            # Las LIFs con service_policy gestionan failover automáticamente
+            elif 'failover_policy' in lif_config:
                 if not hasattr(ip_interface, 'location'):
                     ip_interface.location = {}
                 ip_interface.location['failover'] = lif_config['failover_policy']
                 print(f"    - Failover Policy: {lif_config['failover_policy']}")
-            
-            # Service Policy (para LIFs de management)
-            if 'service_policy' in lif_config:
-                ip_interface.service_policy = {'name': lif_config['service_policy']}
-                print(f"    - Service Policy: {lif_config['service_policy']}")
             
             # Scope (solo 'svm' o 'cluster' son válidos)
             # Para LIFs de datos NFS, siempre es 'svm'
