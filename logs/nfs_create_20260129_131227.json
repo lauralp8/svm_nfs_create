@@ -1,0 +1,10 @@
+{
+  "vserver_name": "svm_nfs_cluster1",
+  "enabled": true,
+  "state": "online",
+  "svm_uuid": "080f867d-fd3e-11f0-80e5-005056b0899f",
+  "v3_enabled": true,
+  "v40_enabled": true,
+  "v41_enabled": true,
+  "v41_pnfs_enabled": true
+}
