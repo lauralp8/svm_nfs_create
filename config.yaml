@@ -8,9 +8,9 @@ cluster:
   username: admin
   password: Netapp1!
 
-# Configuración de la SVM FCP
+# Configuración de la SVM NFS
 svm: 
-  name: svm_1_cluster
+  name: svm_nfs_cluster1
   ipspace: Default
   aggregate: cluster1_01_SSD_1
   language: c.utf_8
