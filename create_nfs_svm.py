@@ -1003,6 +1003,244 @@ def export_policy_rules_create(svm_config):
 
 
 # ============================================================================
+# NETWORK INTERFACES CREATION FUNCTION
+# ============================================================================
+
+def network_interfaces_create(svm_config):
+    """
+    Crea network interfaces (LIFs) según config.yaml con total flexibilidad
+    
+    Permite configurar diferentes tipos de LIFs con atributos específicos:
+    - LIF de datos (role=data, data-protocol=nfs)
+    - LIF de management (service-policy=default-management)
+    - Cada LIF puede tener atributos completamente diferentes
+    
+    Args:
+        svm_config: Diccionario con la configuración de la SVM del config.yaml
+    
+    Returns:
+        bool: True si todas las interfaces se crearon exitosamente, False si hubo error
+    """
+    try:
+        # Extraer nombre de la SVM del config
+        svm_name = svm_config.get('name')
+        
+        # Extraer configuración de network interfaces del config.yaml
+        network_interfaces_config = svm_config.get('network_interfaces', [])
+        
+        if not network_interfaces_config:
+            print(f"[WARNING] No network interfaces defined in config.yaml")
+            return True
+        
+        print(f"\n[*] Creating network interfaces for SVM: {svm_name}")
+        
+        created_lifs = []
+        
+        # ITERAR POR CADA LIF DEFINIDA EN EL CONFIG
+        for lif_config in network_interfaces_config:
+            lif_name = lif_config.get('name')
+            
+            if not lif_name:
+                print(f"[ERROR] LIF name is required")
+                continue
+            
+            print(f"\n[*] Creating network interface: {lif_name}")
+            
+            # Crear objeto IpInterface
+            ip_interface = IpInterface()
+            ip_interface.name = lif_name
+            ip_interface.svm = {'name': svm_name}
+            
+            # ==============================================================
+            # ASIGNACIÓN CONDICIONAL DE ATRIBUTOS
+            # Solo se agregan los atributos que existen en el config.yaml
+            # ==============================================================
+            
+            # IP y Subnet (generalmente requeridos)
+            if 'address' in lif_config:
+                ip_interface.ip = {'address': lif_config['address']}
+                print(f"    - Address: {lif_config['address']}")
+            
+            if 'netmask' in lif_config:
+                if not hasattr(ip_interface, 'ip'):
+                    ip_interface.ip = {}
+                ip_interface.ip['netmask'] = lif_config['netmask']
+                print(f"    - Netmask: {lif_config['netmask']}")
+            
+            # Location (home node y port)
+            if 'home_node' in lif_config or 'home_port' in lif_config:
+                ip_interface.location = {}
+                if 'home_node' in lif_config:
+                    ip_interface.location['home_node'] = {'name': lif_config['home_node']}
+                    print(f"    - Home Node: {lif_config['home_node']}")
+                if 'home_port' in lif_config:
+                    ip_interface.location['home_port'] = {'name': lif_config['home_port']}
+                    print(f"    - Home Port: {lif_config['home_port']}")
+            
+            # Broadcast Domain
+            if 'broadcast_domain' in lif_config:
+                if not hasattr(ip_interface, 'location'):
+                    ip_interface.location = {}
+                ip_interface.location['broadcast_domain'] = {'name': lif_config['broadcast_domain']}
+                print(f"    - Broadcast Domain: {lif_config['broadcast_domain']}")
+            
+            # Auto Revert
+            if 'auto_revert' in lif_config:
+                if not hasattr(ip_interface, 'location'):
+                    ip_interface.location = {}
+                ip_interface.location['auto_revert'] = lif_config['auto_revert']
+                print(f"    - Auto Revert: {lif_config['auto_revert']}")
+            
+            # Failover Policy
+            if 'failover_policy' in lif_config:
+                if not hasattr(ip_interface, 'location'):
+                    ip_interface.location = {}
+                ip_interface.location['failover'] = lif_config['failover_policy']
+                print(f"    - Failover Policy: {lif_config['failover_policy']}")
+            
+            # Service Policy (para LIFs de management)
+            if 'service_policy' in lif_config:
+                ip_interface.service_policy = {'name': lif_config['service_policy']}
+                print(f"    - Service Policy: {lif_config['service_policy']}")
+            
+            # Scope (role + data-protocol para LIFs de datos)
+            if 'role' in lif_config or 'data_protocol' in lif_config:
+                ip_interface.scope = {}
+                if 'role' in lif_config:
+                    # IMPORTANTE: En API REST, 'role' se llama 'scope'
+                    print(f"    - Role: {lif_config['role']}")
+                if 'data_protocol' in lif_config:
+                    ip_interface.services = [lif_config['data_protocol']]
+                    print(f"    - Data Protocol: {lif_config['data_protocol']}")
+            
+            # Enabled (status-admin)
+            if 'status_admin' in lif_config:
+                ip_interface.enabled = (lif_config['status_admin'] == 'up')
+                print(f"    - Status Admin: {lif_config['status_admin']}")
+            
+            # Crear la LIF
+            print(f"[*] Creating network interface...")
+            ip_interface.post(hydrate=True)
+            
+            print(f"[+] Network interface '{lif_name}' created successfully!")
+            created_lifs.append(lif_name)
+        
+        # GET: Obtener todas las LIFs desde la cabina
+        print(f"\n[*] Retrieving all network interfaces from cluster...")
+        
+        lifs_data = {
+            'vserver_name': svm_name,
+            'total_lifs': 0,
+            'lifs': []
+        }
+        
+        # Obtener todas las LIFs de la SVM
+        lifs = IpInterface.get_collection(**{'svm.name': svm_name})
+        
+        for lif in lifs:
+            lif.get()
+            
+            lif_info = {
+                'name': lif.name if hasattr(lif, 'name') else 'N/A',
+                'address': 'N/A',
+                'netmask': 'N/A',
+                'home_node': 'N/A',
+                'home_port': 'N/A',
+                'current_node': 'N/A',
+                'current_port': 'N/A',
+                'status_admin': 'N/A',
+                'status_oper': 'N/A',
+                'failover': 'N/A',
+                'auto_revert': 'N/A',
+                'service_policy': 'N/A',
+                'services': 'N/A'
+            }
+            
+            # Extraer IP info
+            if hasattr(lif, 'ip') and lif.ip:
+                if hasattr(lif.ip, 'address'):
+                    lif_info['address'] = lif.ip.address
+                if hasattr(lif.ip, 'netmask'):
+                    lif_info['netmask'] = lif.ip.netmask
+            
+            # Extraer location info
+            if hasattr(lif, 'location') and lif.location:
+                if hasattr(lif.location, 'home_node') and lif.location.home_node:
+                    lif_info['home_node'] = lif.location.home_node.name
+                if hasattr(lif.location, 'home_port') and lif.location.home_port:
+                    lif_info['home_port'] = lif.location.home_port.name
+                if hasattr(lif.location, 'node') and lif.location.node:
+                    lif_info['current_node'] = lif.location.node.name
+                if hasattr(lif.location, 'port') and lif.location.port:
+                    lif_info['current_port'] = lif.location.port.name
+                if hasattr(lif.location, 'failover'):
+                    lif_info['failover'] = lif.location.failover
+                if hasattr(lif.location, 'auto_revert'):
+                    lif_info['auto_revert'] = lif.location.auto_revert
+            
+            # Extraer status
+            if hasattr(lif, 'enabled'):
+                lif_info['status_admin'] = 'up' if lif.enabled else 'down'
+            if hasattr(lif, 'state'):
+                lif_info['status_oper'] = lif.state
+            
+            # Extraer service policy
+            if hasattr(lif, 'service_policy') and lif.service_policy:
+                if hasattr(lif.service_policy, 'name'):
+                    lif_info['service_policy'] = lif.service_policy.name
+            
+            # Extraer services
+            if hasattr(lif, 'services') and lif.services:
+                lif_info['services'] = ', '.join(lif.services)
+            
+            lifs_data['lifs'].append(lif_info)
+        
+        lifs_data['total_lifs'] = len(lifs_data['lifs'])
+        
+        # SHOW: Mostrar información como "network interface show -vserver <name>"
+        print(f"\n{'='*120}")
+        print(f"  Network Interface Show")
+        print(f"{'='*120}")
+        print(f"Vserver: {svm_name}")
+        print(f"{'='*120}")
+        print(f"{'LIF Name':<15} {'Address':<16} {'Home Node':<15} {'Home Port':<12} {'Status':<8} {'Failover':<15} {'Services':<20}")
+        print(f"{'-'*120}")
+        
+        for lif in lifs_data['lifs']:
+            print(f"{lif['name']:<15} {lif['address']:<16} {lif['home_node']:<15} {lif['home_port']:<12} {lif['status_admin']:<8} {lif['failover']:<15} {lif['services']:<20}")
+        
+        print(f"\nTotal LIFs: {lifs_data['total_lifs']}")
+        print(f"{'='*120}\n")
+        
+        # Guardar en log con timestamp
+        save_to_log('network_interfaces', lifs_data)
+        
+        return True
+    
+    # CONTROL DE ERRORES
+    except NetAppRestError as error:
+        print(f"[ERROR] NetApp API error during network interface creation")
+        print(f"[ERROR] HTTP Status: {error.status_code}")
+        
+        if error.status_code == 409:
+            print(f"[ERROR] Network interface may already exist")
+        elif error.status_code == 400:
+            print(f"[ERROR] Bad request - Invalid parameters")
+            print(f"[ERROR] Check: valid IP, node exists, port exists, broadcast domain")
+        elif error.status_code == 404:
+            print(f"[ERROR] Resource not found - Check node/port/broadcast-domain names")
+        else:
+            print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+        
+        return False
+    
+    except Exception as e:
+        print(f"[ERROR] Unexpected error during network interface creation: {type(e).__name__}")
+        print(f"[ERROR] Details: {str(e)}")
+        return False
+
+
+# ============================================================================
 # EVENT LOG RETRIEVAL FUNCTION
 # ============================================================================
 
@@ -1142,6 +1380,13 @@ if export_policy_rules_create(config_data['svm']):
     print("\n[SUCCESS] Export policy rules creation completed!")
 else:
     print("\n[FAILED] Export policy rules creation failed")
+    exit(1)
+
+# Crear network interfaces (LIFs)
+if network_interfaces_create(config_data['svm']):
+    print("\n[SUCCESS] Network interfaces creation completed!")
+else:
+    print("\n[FAILED] Network interfaces creation failed")
     exit(1)
 
 # Obtener event logs de la cabina como backup

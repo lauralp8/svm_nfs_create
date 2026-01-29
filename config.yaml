@@ -68,4 +68,31 @@ svm:
             - nfs
             - nfs3
             - nfs4
-          ruleindex: 1 
+          # ruleindex: 1 # Puedes omitir si no es necesario
+
+  # Configuración de Network Interfaces (LIFs)
+  # Cada LIF puede tener atributos completamente diferentes
+  network_interfaces:
+    # LIF 1: Interfaz de datos NFS
+    - name: lif1
+      role: data
+      data_protocol: nfs
+      home_node: cluster1-01
+      home_port: a0a
+      address: 192.168.25.108
+      netmask: 255.255.255.0
+      firewall_policy: data
+      auto_revert: false
+    
+    # LIF 2: Interfaz de management
+    - name: lif2
+      service_policy: default-management
+      address: 192.168.23.108
+      netmask: 255.255.255.0
+      home_node: cluster1-01
+      home_port: a0a
+      broadcast_domain: BDprueba
+      status_admin: up
+      failover_policy: system-defined
+      firewall_policy: mgmt
+      auto_revert: false
