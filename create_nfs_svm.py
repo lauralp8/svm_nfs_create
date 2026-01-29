@@ -768,7 +768,7 @@ def export_policies(svm_config):
         
         # Obtener todas las export policies de la SVM
         export_policies_list = []
-        policies = ExportPolicy.get_collection(svm={'name': svm_name})
+        policies = ExportPolicy.get_collection(**{'svm.name': svm_name})
         
         for policy in policies:
             policy.get()
