@@ -29,7 +29,7 @@ Version: 1.0.0
 # IMPORTS
 # ============================================================================
 from netapp_ontap import config, HostConnection, NetAppRestError
-from netapp_ontap.resources import Cluster, Svm, IpInterface, EmsEvent, NfsService, ExportPolicy
+from netapp_ontap.resources import Cluster, Svm, IpInterface, EmsEvent, NfsService, ExportPolicy, ExportRule
 import yaml
 import json
 import os
@@ -826,6 +826,183 @@ def export_policies(svm_config):
 
 
 # ============================================================================
+# EXPORT POLICY RULES CREATION FUNCTION
+# ============================================================================
+
+def export_policy_rules_create(svm_config):
+    """
+    Crea reglas de export policy para cada política definida en config.yaml
+    
+    Esta función permite configurar múltiples policies con diferentes reglas.
+    Cada policy puede tener atributos completamente diferentes:
+    - 'default' puede tener rorule=any, superuser=any, clientmatch=0.0.0.0/0
+    - 'rhoso' puede tener rorule=sys, sin superuser, clientmatch=192.168.25.0/24
+    
+    Args:
+        svm_config: Diccionario con la configuración de la SVM del config.yaml
+    
+    Returns:
+        bool: True si todas las reglas se crearon exitosamente, False si hubo error
+    """
+    try:
+        # Extraer nombre de la SVM del config
+        svm_name = svm_config.get('name')
+        
+        # Extraer la configuración de export policy rules del config.yaml
+        export_policy_rules_config = svm_config.get('export_policy_rules', [])
+        
+        if not export_policy_rules_config:
+            print(f"[WARNING] No export policy rules defined in config.yaml")
+            return True
+        
+        print(f"\n[*] Creating export policy rules for SVM: {svm_name}")
+        
+        all_created_rules = []
+        
+        # PASO 1: ITERAR POR CADA POLICY (default, rhoso, etc.)
+        for policy_config in export_policy_rules_config:
+            policy_name = policy_config.get('policy_name')
+            rules = policy_config.get('rules', [])
+            
+            print(f"\n[*] Processing policy: {policy_name}")
+            
+            # PASO 2: ITERAR POR CADA REGLA DE LA POLICY
+            # Aquí es donde cada policy puede tener atributos diferentes
+            for rule_config in rules:
+                # Extraer atributos de la regla (con valores por defecto)
+                clientmatch = rule_config.get('clientmatch')
+                rorule = rule_config.get('rorule', 'any')  # Default: any
+                rwrule = rule_config.get('rwrule', 'any')  # Default: any
+                superuser = rule_config.get('superuser')    # Puede ser None
+                protocols = rule_config.get('protocols', ['nfs'])
+                ruleindex = rule_config.get('ruleindex', 1)
+                
+                print(f"[*] Creating rule for client: {clientmatch}")
+                print(f"    - RO Rule: {rorule}")
+                print(f"    - RW Rule: {rwrule}")
+                if superuser:
+                    print(f"    - Superuser: {superuser}")
+                print(f"    - Protocols: {', '.join(protocols)}")
+                
+                # Buscar el ID de la policy (necesario para crear rules)
+                policy = ExportPolicy.find(name=policy_name, **{'svm.name': svm_name})
+                if not policy:
+                    print(f"[ERROR] Export policy '{policy_name}' not found")
+                    return False
+                
+                # Crear objeto ExportRule
+                export_rule = ExportRule(policy.id)  # Requiere policy ID
+                export_rule.clients = [{'match': clientmatch}]
+                export_rule.ro_rule = [rorule]
+                export_rule.rw_rule = [rwrule]
+                
+                # IMPORTANTE: Solo agregar superuser si está definido
+                if superuser:
+                    export_rule.superuser = [superuser]
+                
+                export_rule.protocols = protocols
+                export_rule.index = ruleindex
+                
+                # Crear la regla
+                export_rule.post(hydrate=True)
+                
+                print(f"[+] Rule created successfully!")
+                
+                # Guardar info de la regla creada
+                all_created_rules.append({
+                    'policy_name': policy_name,
+                    'clientmatch': clientmatch,
+                    'rorule': rorule,
+                    'rwrule': rwrule,
+                    'superuser': superuser if superuser else 'none',
+                    'protocols': protocols,
+                    'ruleindex': ruleindex
+                })
+        
+        # GET: Obtener todas las reglas creadas desde la cabina
+        print(f"\n[*] Retrieving all export policy rules from cluster...")
+        
+        rules_data = {
+            'vserver_name': svm_name,
+            'total_policies': len(export_policy_rules_config),
+            'policies': []
+        }
+        
+        for policy_config in export_policy_rules_config:
+            policy_name = policy_config.get('policy_name')
+            
+            # Buscar el policy para obtener su ID
+            policy = ExportPolicy.find(name=policy_name, **{'svm.name': svm_name})
+            if not policy:
+                continue
+            
+            # Obtener reglas de esta policy usando el ID
+            rules = ExportRule.get_collection(policy.id)
+            
+            policy_rules = []
+            for rule in rules:
+                rule.get()
+                
+                policy_rules.append({
+                    'index': rule.index if hasattr(rule, 'index') else 'N/A',
+                    'clientmatch': rule.clients[0]['match'] if hasattr(rule, 'clients') and rule.clients else 'N/A',
+                    'rorule': ', '.join(rule.ro_rule) if hasattr(rule, 'ro_rule') else 'N/A',
+                    'rwrule': ', '.join(rule.rw_rule) if hasattr(rule, 'rw_rule') else 'N/A',
+                    'superuser': ', '.join(rule.superuser) if hasattr(rule, 'superuser') and rule.superuser else 'none',
+                    'protocols': ', '.join(rule.protocols) if hasattr(rule, 'protocols') else 'N/A'
+                })
+            
+            rules_data['policies'].append({
+                'policy_name': policy_name,
+                'policy_id': policy.id,
+                'rules': policy_rules
+            })
+        
+        # SHOW: Mostrar información como "vserver export-policy rule show"
+        print(f"\n{'='*90}")
+        print(f"  Export Policy Rules Show")
+        print(f"{'='*90}")
+        
+        for policy in rules_data['policies']:
+            print(f"\nPolicy: {policy['policy_name']} (ID: {policy['policy_id']})")
+            print(f"{'-'*90}")
+            print(f"{'Index':<8} {'Client Match':<20} {'RO Rule':<10} {'RW Rule':<10} {'Superuser':<12} {'Protocols':<20}")
+            print(f"{'-'*90}")
+            
+            for rule in policy['rules']:
+                print(f"{str(rule['index']):<8} {rule['clientmatch']:<20} {rule['rorule']:<10} {rule['rwrule']:<10} {rule['superuser']:<12} {rule['protocols']:<20}")
+        
+        print(f"{'='*90}\n")
+        
+        # Guardar en log con timestamp
+        save_to_log('export_policy_rules', rules_data)
+        
+        return True
+    
+    # CONTROL DE ERRORES
+    except NetAppRestError as error:
+        print(f"[ERROR] NetApp API error during export policy rules creation")
+        print(f"[ERROR] HTTP Status: {error.status_code}")
+        
+        if error.status_code == 409:
+            print(f"[ERROR] Export rule may already exist at that index")
+        elif error.status_code == 400:
+            print(f"[ERROR] Bad request - Invalid parameters")
+            print(f"[ERROR] Check: policy exists, valid protocols, valid auth methods")
+        elif error.status_code == 404:
+            print(f"[ERROR] Export policy not found - Create policy first")
+        else:
+            print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+        
+        return False
+    
+    except Exception as e:
+        print(f"[ERROR] Unexpected error during export policy rules creation: {type(e).__name__}")
+        print(f"[ERROR] Details: {str(e)}")
+        return False
+
+
+# ============================================================================
 # EVENT LOG RETRIEVAL FUNCTION
 # ============================================================================
 
@@ -958,6 +1135,13 @@ if export_policies(config_data['svm']):
     print("\n[SUCCESS] Export policy creation completed!")
 else:
     print("\n[FAILED] Export policy creation failed")
+    exit(1)
+
+# Crear reglas de export policy
+if export_policy_rules_create(config_data['svm']):
+    print("\n[SUCCESS] Export policy rules creation completed!")
+else:
+    print("\n[FAILED] Export policy rules creation failed")
     exit(1)
 
 # Obtener event logs de la cabina como backup

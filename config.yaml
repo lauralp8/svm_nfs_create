@@ -39,4 +39,33 @@ svm:
   nfs_v41_pnfs_enabled: true
 
   # Configuración de export policy
-  export_policy_name: rhoso 
+  export_policy_name: rhoso
+
+  # Configuración de export policy rules
+  # Cada policy puede tener múltiples reglas con diferentes atributos
+  export_policy_rules:
+    # Policy 1: default (permite acceso total desde cualquier IP)
+    - policy_name: default
+      rules:
+        - clientmatch: 0.0.0.0/0
+          rorule: any
+          rwrule: any
+          superuser: any
+          protocols:
+            - nfs
+            - nfs3
+            - nfs4
+          ruleindex: 1
+    
+    # Policy 2: rhoso (acceso restringido desde subred específica)
+    - policy_name: rhoso
+      rules:
+        - clientmatch: 192.168.25.0/24
+          rorule: sys
+          rwrule: any
+          # superuser: none  # Puedes omitir si no quieres superuser
+          protocols:
+            - nfs
+            - nfs3
+            - nfs4
+          ruleindex: 1 
