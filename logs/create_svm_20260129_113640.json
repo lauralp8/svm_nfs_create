@@ -1,0 +1,14 @@
+{
+  "uuid": "ae181618-fd30-11f0-80e5-005056b0899f",
+  "name": "svm_nfs_cluster1",
+  "state": "running",
+  "ipspace": "Default",
+  "language": "c.utf_8",
+  "security_style": null,
+  "aggregates": [
+    {
+      "name": "cluster1_01_SSD_1",
+      "uuid": "468c1494-b888-4575-94d5-ea92af8b3b4f"
+    }
+  ]
+}
