@@ -79,7 +79,7 @@ svm:
       data_protocol: nfs
       home_node: cluster1-01
       home_port: a0a
-      address: 192.168.25.108
+      address: 192.168.0.121
       netmask: 255.255.255.0
       firewall_policy: data
       auto_revert: false
@@ -87,11 +87,11 @@ svm:
     # LIF 2: Interfaz de management
     - name: lif2
       service_policy: default-management
-      address: 192.168.23.108
+      address: 192.168.0.120
       netmask: 255.255.255.0
       home_node: cluster1-01
       home_port: a0a
-      broadcast_domain: BDprueba
+      broadcast_domain: Cluster
       status_admin: up
       failover_policy: system-defined
       firewall_policy: mgmt
