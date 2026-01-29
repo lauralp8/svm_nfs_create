@@ -1103,15 +1103,30 @@ def network_interfaces_create(svm_config):
                 ip_interface.service_policy = {'name': lif_config['service_policy']}
                 print(f"    - Service Policy: {lif_config['service_policy']}")
             
-            # Scope (role + data-protocol para LIFs de datos)
-            if 'role' in lif_config or 'data_protocol' in lif_config:
-                ip_interface.scope = {}
-                if 'role' in lif_config:
-                    # IMPORTANTE: En API REST, 'role' se llama 'scope'
+            # Scope (solo 'svm' o 'cluster' son válidos)
+            # Para LIFs de datos NFS, siempre es 'svm'
+            if 'role' in lif_config:
+                if lif_config['role'] == 'data':
+                    ip_interface.scope = 'svm'
+                    print(f"    - Scope: svm (data LIF)")
+                else:
+                    # Para otros tipos de LIFs
+                    ip_interface.scope = 'svm'  # Default
                     print(f"    - Role: {lif_config['role']}")
-                if 'data_protocol' in lif_config:
-                    ip_interface.services = [lif_config['data_protocol']]
-                    print(f"    - Data Protocol: {lif_config['data_protocol']}")
+            
+            # Data Protocol (services para LIFs de datos)
+            if 'data_protocol' in lif_config:
+                # Mapeo de protocolos CLI a services API
+                protocol_map = {
+                    'nfs': 'data-nfs',
+                    'cifs': 'data-cifs',
+                    'iscsi': 'data-iscsi',
+                    'fcp': 'data-fcp'
+                }
+                protocol = lif_config['data_protocol']
+                service_name = protocol_map.get(protocol, f'data-{protocol}')
+                ip_interface.services = [service_name]
+                print(f"    - Data Protocol: {protocol} (service: {service_name})")
             
             # Enabled (status-admin)
             if 'status_admin' in lif_config:
@@ -1230,7 +1245,11 @@ def network_interfaces_create(svm_config):
         elif error.status_code == 404:
             print(f"[ERROR] Resource not found - Check node/port/broadcast-domain names")
         else:
-            print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+            # Manejar caso donde http_err_response puede ser None (errores de validación)
+            if error.http_err_response and hasattr(error.http_err_response, 'http_response'):
+                print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+            else:
+                print(f"[ERROR] Details: {str(error)}")
         
         return False
     
