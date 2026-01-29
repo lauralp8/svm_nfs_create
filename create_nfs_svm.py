@@ -1003,58 +1003,6 @@ def export_policy_rules_create(svm_config):
 
 
 # ============================================================================
-# NETWORK DIAGNOSTICS FUNCTION
-# ============================================================================
-
-def show_network_resources():
-    """
-    Muestra los recursos de red disponibles en el cluster para diagnóstico
-    Útil para verificar nombres de nodos, puertos y broadcast domains
-    
-    Returns:
-        bool: True si se obtuvo la información exitosamente
-    """
-    try:
-        from netapp_ontap.resources import Node, Port, BroadcastDomain
-        
-        print(f"\n{'='*80}")
-        print(f"  Network Resources Available in Cluster")
-        print(f"{'='*80}")
-        
-        # NODOS
-        print(f"\n[+] NODES:")
-        nodes = Node.get_collection()
-        for node in nodes:
-            print(f"    - {node.name}")
-        
-        # PUERTOS
-        print(f"\n[+] PORTS (by node):")
-        for node in nodes:
-            ports = Port.get_collection(**{'node.name': node.name})
-            print(f"\n    Node: {node.name}")
-            for port in ports:
-                port.get()
-                port_type = port.type if hasattr(port, 'type') else 'N/A'
-                port_state = port.state if hasattr(port, 'state') else 'N/A'
-                print(f"      - {port.name} (type: {port_type}, state: {port_state})")
-        
-        # BROADCAST DOMAINS
-        print(f"\n[+] BROADCAST DOMAINS:")
-        broadcast_domains = BroadcastDomain.get_collection()
-        for bd in broadcast_domains:
-            bd.get()
-            ipspace = bd.ipspace.name if hasattr(bd, 'ipspace') and bd.ipspace else 'N/A'
-            print(f"    - {bd.name} (IPspace: {ipspace})")
-        
-        print(f"\n{'='*80}\n")
-        return True
-        
-    except Exception as e:
-        print(f"[ERROR] Could not retrieve network resources: {str(e)}")
-        return False
-
-
-# ============================================================================
 # NETWORK INTERFACES CREATION FUNCTION
 # ============================================================================
 
@@ -1452,12 +1400,6 @@ if export_policy_rules_create(config_data['svm']):
 else:
     print("\n[FAILED] Export policy rules creation failed")
     exit(1)
-
-# Mostrar recursos de red disponibles (diagnóstico)
-print("\n" + "="*70)
-print("  Network Resources Diagnostic")
-print("="*70)
-show_network_resources()
 
 # Crear network interfaces (LIFs)
 if network_interfaces_create(config_data['svm']):
