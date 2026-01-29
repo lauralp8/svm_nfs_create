@@ -78,7 +78,7 @@ svm:
       role: data
       data_protocol: nfs
       home_node: cluster1-01
-      home_port: a0a
+      home_port: e0c
       address: 192.168.0.121
       netmask: 255.255.255.0
       firewall_policy: data
@@ -90,7 +90,7 @@ svm:
       address: 192.168.0.120
       netmask: 255.255.255.0
       home_node: cluster1-01
-      home_port: a0a
+      home_port: e0c
       broadcast_domain: Default
       status_admin: up
       failover_policy: system-defined
