@@ -22,3 +22,12 @@ svm:
     - cluster1_02_SSD_1
   is_space_reporting_logical: true
   is_space_enforcement_logical: true
+
+  # Protocolos permitidos
+  protocols:
+    cifs: false
+    nfs: true
+    ndmp: false
+    s3: false
+    fcp: true
+    iscsi: true

@@ -485,6 +485,129 @@ def modify_svm(svm_config):
 
 
 # ============================================================================
+# NFS PROTOCOL CONFIGURATION FUNCTIONS
+# ============================================================================
+
+def configure_protocols(svm_config):
+    """
+    Configura los protocolos permitidos en la SVM (allowed=true/false)
+    
+    Args:
+        svm_config: Diccionario con la configuración de la SVM del config.yaml
+                    Debe incluir la sección 'protocols' con cada protocolo y su valor
+    
+    Returns:
+        bool: True si se configuró exitosamente, False si hubo error
+    """
+    try:
+        # Extraer nombre de la SVM del config
+        svm_name = svm_config.get('name')
+        
+        # Extraer diccionario de protocolos del config.yaml
+        protocols_config = svm_config.get('protocols', {})
+        
+        # Validar que haya protocolos para configurar
+        if not protocols_config:
+            print(f"[WARNING] No protocol configuration found in config.yaml")
+            return True
+        
+        print(f"\n[*] Configuring protocols for SVM: {svm_name}")
+        
+        # Buscar la SVM
+        svm = Svm.find(name=svm_name)
+        if not svm:
+            print(f"[ERROR] SVM '{svm_name}' not found")
+            return False
+        
+        # Obtener el objeto SVM completo
+        svm_obj = Svm(uuid=svm.uuid)
+        
+        # Configurar cada protocolo según el config.yaml
+        for protocol, allowed in protocols_config.items():
+            # Convertir el nombre del protocolo a minúsculas por si acaso
+            protocol_name = protocol.lower()
+            
+            # Configurar el protocolo con el valor allowed
+            setattr(svm_obj, protocol_name, {'allowed': allowed})
+            
+            status_text = "enabled" if allowed else "disabled"
+            print(f"[*] Protocol {protocol_name.upper()}: {status_text}")
+        
+        # Aplicar cambios a la SVM
+        print(f"[*] Applying protocol changes...")
+        svm_obj.patch()
+        
+        print(f"[+] Protocol configuration applied successfully!")
+        
+        # GET: Obtener datos reales de la SVM con los protocolos desde la cabina
+        print(f"[*] Retrieving protocol configuration from cluster...")
+        svm_updated = Svm.find(name=svm_name)
+        if svm_updated:
+            # Obtener todos los campos de protocolos
+            svm_updated.get(fields='nfs,cifs,fcp,iscsi,nvme,s3,ndmp')
+            
+            # Construir listas de protocolos permitidos y no permitidos
+            allowed_protocols = []
+            disallowed_protocols = []
+            
+            # Lista de protocolos conocidos en NetApp ONTAP
+            protocol_fields = ['nfs', 'cifs', 'fcp', 'iscsi', 'nvme', 's3', 'ndmp']
+            
+            for protocol in protocol_fields:
+                if hasattr(svm_updated, protocol):
+                    protocol_obj = getattr(svm_updated, protocol)
+                    if protocol_obj and hasattr(protocol_obj, 'allowed'):
+                        if protocol_obj.allowed:
+                            allowed_protocols.append(protocol)
+                        else:
+                            disallowed_protocols.append(protocol)
+            
+            # Extraer los datos para el show
+            svm_data = {
+                'vserver_name': svm_name,
+                'vserver_uuid': svm_updated.uuid if hasattr(svm_updated, 'uuid') else 'N/A',
+                'allowed_protocols': allowed_protocols,
+                'disallowed_protocols': disallowed_protocols
+            }
+            
+            # SHOW: Mostrar información como "vserver show -vserver <name> -instance"
+            print(f"\n{'='*60}")
+            print(f"  Protocol Configuration Show")
+            print(f"{'='*60}")
+            print(f"                   Vserver: {svm_data['vserver_name']}")
+            print(f"              Vserver UUID: {svm_data['vserver_uuid']}")
+            print(f"        Allowed Protocols: {', '.join(allowed_protocols) if allowed_protocols else 'none'}")
+            print(f"     Disallowed Protocols: {', '.join(disallowed_protocols) if disallowed_protocols else 'none'}")
+            print(f"{'='*60}\n")
+            
+            # Guardar en log con timestamp
+            save_to_log('configure_protocols', svm_data)
+        else:
+            print(f"[WARNING] Could not retrieve protocol configuration")
+        
+        return True
+    
+    # CONTROL DE ERRORES
+    except NetAppRestError as error:
+        print(f"[ERROR] NetApp API error during protocol configuration")
+        print(f"[ERROR] HTTP Status: {error.status_code}")
+        
+        if error.status_code == 400:
+            print(f"[ERROR] Bad request - Invalid protocol configuration")
+            print(f"[ERROR] Check that protocol names are valid")
+        else:
+            print(f"[ERROR] Details: {error.http_err_response.http_response.text}")
+        
+        return False
+    
+    except Exception as e:
+        print(f"[ERROR] Unexpected error during protocol configuration: {type(e).__name__}")
+        print(f"[ERROR] Details: {str(e)}")
+        return False
+
+
+
+# ============================================================================
 # EVENT LOG RETRIEVAL FUNCTION
 # ============================================================================
 
@@ -596,4 +719,13 @@ if modify_svm(config_data['svm']):
 else:
     print("\n[FAILED] SVM modification failed")
     exit(1)
+
+# NFS SERVICE CREATION STEPS
+# Configurar protocolos permitidos en la SVM
+if configure_protocols(config_data['svm']):
+    print("\n[SUCCESS] Protocol configuration completed!")
+else:
+    print("\n[FAILED] Protocol configuration failed")
+    exit(1)
+
 
