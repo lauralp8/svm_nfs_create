@@ -90,7 +90,7 @@ svm:
       address: 192.168.0.142  
       netmask: 255.255.255.0
       home_node: cluster1-01
-      home_port: e0e
+      home_port: e0d
       broadcast_domain: Default
       status_admin: up
       failover_policy: system-defined
