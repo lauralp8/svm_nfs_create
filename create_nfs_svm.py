@@ -121,7 +121,7 @@ def config_loader(path="config.yaml"):
 
 def save_to_log(operation_name, data):
     """
-    Guarda datos en un archivo JSON dentro de la carpeta logs/ con timestamp en hora española
+    Guarda datos en un archivo JSON dentro de la carpeta logs/ con timestamp
     
     Args:
         operation_name (str): Nombre de la operación (ej: 'create_svm', 'fcp_create')
@@ -132,21 +132,16 @@ def save_to_log(operation_name, data):
     
     Ejemplo:
         save_to_log('create_svm', svm_data)
-        # Crea: logs/create_svm_20260129_143025.json (hora española)
+        # Crea: logs/create_svm_20260129_143025.json
     """
     try:
-        from datetime import timezone, timedelta
-        
         # Crear carpeta logs si no existe
         logs_dir = "logs"
         if not os.path.exists(logs_dir):
             os.makedirs(logs_dir)
         
-        # Generar timestamp en hora española (UTC+1 en invierno, UTC+2 en verano)
-        # España usa CET (UTC+1) / CEST (UTC+2)
-        spanish_tz = timezone(timedelta(hours=1))  # CET (invierno)
-        # Para horario de verano automático, usar timedelta(hours=2) o una librería como pytz
-        timestamp = datetime.now(spanish_tz).strftime("%Y%m%d_%H%M%S")
+        # Generar timestamp: YYYYMMDD_HHMMSS
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # Nombre del archivo: operation_YYYYMMDD_HHMMSS.json
         filename = f"{logs_dir}/{operation_name}_{timestamp}.json"
