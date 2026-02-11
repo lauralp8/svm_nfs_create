@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ADAPTAR TEXTO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-NetApp ONTAP SVM Creation and Configuration Script
+NetApp ONTAP NFS SVM Creation and Configuration Script
 
 This script automates the creation and configuration of Storage Virtual Machines (SVMs)
-on NetApp ONTAP systems using the NetApp ONTAP REST API Python Client Library.
+with NFS protocol on NetApp ONTAP systems using the NetApp ONTAP REST API Python Client Library.
 
 Features:
     - SVM creation with custom parameters
-    - FCP service configuration
-    - Multiple network interfaces (FCP LIFs)
+    - NFS service configuration (NFSv3, NFSv4, NFSv4.1)
+    - Multiple network interfaces (NFS Data LIFs)
     - Management interface creation
-    - Protocol configuration
-    - Comprehensive error handling and validation
+    - Export policies and rules configuration
+    - Event logging and comprehensive error handling
+    - JSON logging for all operations
 
 Requirements:
     - NetApp ONTAP 9.6+
@@ -21,8 +21,13 @@ Requirements:
     - netapp-ontap library
     - PyYAML library
 
-Author: NetApp ONTAP Automation
+Configuration:
+    - Edit config.yaml to set cluster credentials and SVM parameters
+    - Define NFS interfaces, export policies, and allowed clients
+
+Author: ONTAP Automation Team
 Version: 1.0.0
+Last Updated: February 2026
 """
 
 # ============================================================================
