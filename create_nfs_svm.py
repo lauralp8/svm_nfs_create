@@ -134,10 +134,6 @@ def save_to_log(operation_name, data):
     
     Returns:
         str: Ruta del archivo creado
-    
-    Ejemplo:
-        save_to_log('create_svm', svm_data)
-        # Crea: logs/create_svm_20260129_143025.json
     """
     try:
         # Crear carpeta logs si no existe
