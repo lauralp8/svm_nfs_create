@@ -944,6 +944,7 @@ def export_policy_rules_create(svm_config):
             for rule in rules:
                 rule.get()
                 
+                # Extraer datos de la regla para el show
                 policy_rules.append({
                     'index': rule.index if hasattr(rule, 'index') else 'N/A',
                     'clientmatch': rule.clients[0]['match'] if hasattr(rule, 'clients') and rule.clients else 'N/A',
@@ -1415,6 +1416,7 @@ else:
     print("\n[FAILED] Network interfaces creation failed")
     exit(1)
 
+# LOGS
 # Obtener event logs de la cabina como backup
 if get_event_logs(max_records=100):
     print("\n[SUCCESS] Event logs backup completed!")

@@ -97,59 +97,101 @@ Lista de interfaces de red NFS. Cada interfaz puede incluir:
 
 Para ver ejemplos de configuración, consulta el archivo `config.yaml` incluido en el proyecto.
 
+## Funciones del Script
+
+### `config_loader`
+Esta función carga la configuración desde un archivo YAML y valida que contenga las secciones necesarias para crear una SVM en NetApp ONTAP. 
+
+- **Parámetros**: 
+  - `path` (str): Ruta al archivo de configuración (por defecto `config.yaml`).
+- **Retorno**: 
+  - Diccionario con la configuración cargada o `None` si ocurre un error.
+- **Errores manejados**: 
+  - Archivo no encontrado, formato YAML inválido, permisos insuficientes, entre otros.
+
+### `save_to_log`
+Guarda datos en un archivo JSON dentro de la carpeta `logs/` con un timestamp automático.
+
+- **Parámetros**: 
+  - `operation_name` (str): Nombre de la operación (ejemplo: `create_svm`).
+  - `data` (dict): Datos a guardar.
+- **Retorno**: 
+  - Ruta del archivo creado.
+- **Características**: 
+  - Crea automáticamente la carpeta `logs/` si no existe.
+  - Genera nombres de archivo con el formato `operation_YYYYMMDD_HHMMSS.json`.
+
+## Ejemplo de Configuración
+
+### Reglas de Exportación (`export_policy_rules`)
+```yaml
+export_policy_rules:
+  - policy_name: default
+    rules:
+      - clientmatch: 0.0.0.0/0
+        rorule: any
+        rwrule: any
+        superuser: any
+        protocols:
+          - nfs
+          - nfs3
+          - nfs4
+        ruleindex: 1
+  - policy_name: rhoso
+    rules:
+      - clientmatch: 192.168.25.0/24
+        rorule: sys
+        rwrule: any
+        protocols:
+          - nfs
+          - nfs3
+          - nfs4
+```
+
+### Interfaces de Red (`network_interfaces`)
+```yaml
+network_interfaces:
+  - name: lif1
+    role: data
+    data_protocol: nfs
+    home_node: cluster1-01
+    home_port: e0c
+    address: 192.168.0.141
+    netmask: 255.255.255.0
+    auto_revert: false
+  - name: UFCREATEYA
+    service_policy: default-management
+    address: 192.168.0.142
+    netmask: 255.255.255.0
+    home_node: cluster1-01
+    home_port: e0d
+    broadcast_domain: Default
+    status_admin: up
+    auto_revert: false
+```
+
 ## Sistema de Logging
 
-El script implementa un sistema de logging automático que captura datos REALES de la cabina NetApp después de cada operación:
+### Formato de Logs
+Los logs se generan en formato JSON con la siguiente estructura:
 
-### Características
-- **Timestamp automático**: Formato YYYYMMDD_HHMMSS (ej: 20260129_124530)
-- **Formato JSON**: Datos estructurados y fáciles de procesar
-- **Datos de cabina**: GET real desde ONTAP, no configuración enviada
-- **Directorio logs/**: Se crea automáticamente si no existe
+- **create_svm_YYYYMMDD_HHMMSS.json**:
+  ```json
+  {
+    "uuid": "<UUID de la SVM>",
+    "name": "<Nombre de la SVM>",
+    "state": "<Estado>",
+    "ipspace": "<IPSpace>",
+    "aggregates": ["<Agregado1>", "<Agregado2>"]
+  }
+  ```
 
-### Logs Generados
-
-1. **create_svm_YYYYMMDD_HHMMSS.json**
-   - UUID de la SVM
-   - Nombre, estado, ipspace
-   - Agregados asignados
-   - Configuración de seguridad
-
-2. **modify_svm_YYYYMMDD_HHMMSS.json**
-   - Lista de agregados configurados
-   - is-space-reporting-logical
-   - is-space-enforcement-logical
-
-3. **configure_protocols_YYYYMMDD_HHMMSS.json**
-   - Allowed Protocols (lista)
-   - Disallowed Protocols (lista)
-   - Vserver UUID
-
-4. **nfs_create_YYYYMMDD_HHMMSS.json**
-   - Estado del servicio NFS
-   - Versiones habilitadas (v3, v4.0, v4.1)
-   - Configuración pNFS
-   - SVM UUID
-
-5. **export_policies_YYYYMMDD_HHMMSS.json**
-   - Lista de export policies creadas
-   - Policy ID y nombre
-   - Total de policies
-
-6. **export_policy_rules_YYYYMMDD_HHMMSS.json**
-   - Reglas por policy
-   - Client match, ro/rw rules, superuser
-   - Protocolos y rule index
-
-7. **network_interfaces_YYYYMMDD_HHMMSS.json**
-   - Lista completa de interfaces IP creadas
-   - Direcciones IP, nodo, puerto, estado
-   - Service policy y failover
-
-8. **event_logs_YYYYMMDD_HHMMSS.json**
-   - Backup de eventos del cluster (últimos 100)
-   - Index, timestamp, nodo, severidad, evento
-
+- **modify_svm_YYYYMMDD_HHMMSS.json**:
+  ```json
+  {
+    "aggregates": ["<Agregado1>", "<Agregado2>"]
+  }
+  ```
 
 ## Uso
 
