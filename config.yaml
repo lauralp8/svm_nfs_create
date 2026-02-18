@@ -15,6 +15,7 @@ svm:
   aggregate: cluster1_01_SSD_1
   language: c.utf_8
   security_style: unix
+  rootvolume: rootvol
 
   # Parámetros de modificación
   aggr_list:

@@ -264,6 +264,7 @@ def create_svm(svm_config):
         ipspace = svm_config.get('ipspace')
         language = svm_config.get('language')
         security_style = svm_config.get('security_style')
+        rootvolume = svm_config.get('rootvolume')
         aggregate = svm_config.get('aggregate')
         
         # VALIDACIONES
@@ -297,8 +298,11 @@ def create_svm(svm_config):
             new_svm.language = language
             print(f"[*] Language: {language}")
         
-        # Configurar volumen raíz con security style
+        # Configurar volumen raíz con security style y nombre
         root_vol = {}
+        if rootvolume:
+            root_vol['name'] = rootvolume
+            print(f"[*] Root Volume Name: {rootvolume}")
         if security_style:
             root_vol['security_style'] = security_style
             print(f"[*] Root Volume Security Style: {security_style}")
