@@ -45,7 +45,7 @@ svm:
   # Configuración de export policy rules
   # Cada policy puede tener múltiples reglas con diferentes atributos
   export_policy_rules:
-    # Policy 1: default (permite acceso total desde cualquier IP)
+    # Policy 1: default 
     - policy_name: default
       rules:
         - clientmatch: 0.0.0.0/0
@@ -58,7 +58,7 @@ svm:
             - nfs4
           ruleindex: 1
     
-    # Policy 2: rhoso (acceso restringido desde subred específica)
+    # Policy 2: rhoso 
     - policy_name: rhoso
       rules:
         - clientmatch: 192.168.25.0/24
