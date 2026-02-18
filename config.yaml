@@ -10,7 +10,7 @@ cluster:
 
 # Configuración de la SVM NFS
 svm: 
-  name: svm_nfs_cluster1
+  name: svm_1_cluster
   ipspace: Default
   aggregate: cluster1_01_SSD_1
   language: c.utf_8
