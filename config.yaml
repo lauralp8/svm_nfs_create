@@ -2,13 +2,13 @@
 # CONFIGURACIÓN PARA CREAR SVM CON SERVICIO NFS USANDO API REST DE ONTAP
 # ============================================================================
 
-# Configuración del clúster
+# CONFIGURACIÓN DE CONEXIÓN AL CLUSTER
 cluster:
   host: cluster1.demo.netapp.com
   username: admin
   password: Netapp1!
 
-# Configuración de la SVM NFS
+# CONFIGURACIÓN DE LA SVM NFS
 svm: 
   name: svm_1_cluster
   ipspace: Default
@@ -43,7 +43,6 @@ svm:
   export_policy_name: rhoso
 
   # Configuración de export policy rules
-  # Cada policy puede tener múltiples reglas con diferentes atributos
   export_policy_rules:
     # Policy 1: default 
     - policy_name: default
@@ -64,15 +63,14 @@ svm:
         - clientmatch: 192.168.25.0/24
           rorule: sys
           rwrule: any
-          # superuser: none  # Puedes omitir si no quieres superuser
           protocols:
             - nfs
             - nfs3
             - nfs4
-          # ruleindex: 1 # Puedes omitir si no es necesario
+          # ruleindex: 1 # Opcional
+          # superuser: sys # Opcional 
 
-  # Configuración de Network Interfaces (LIFs)
-  # Cada LIF puede tener atributos completamente diferentes
+  # CONFIGURACIÓN NETWORK INTERFACES (LIFs)
   network_interfaces:
     # LIF 1: Interfaz de datos NFS
     - name: lif1
@@ -85,9 +83,7 @@ svm:
       auto_revert: false
     
     # LIF 2: Interfaz de management
-    # NOTA: Las LIFs con service_policy NO necesitan failover_policy ni firewall_policy
-    # Estos parámetros se gestionan automáticamente por la service policy
-    - name: UFCREATEYA
+    - name: lif2
       service_policy: default-management
       address: 192.168.0.142  
       netmask: 255.255.255.0
