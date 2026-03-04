@@ -1,0 +1,34 @@
+{
+  "vserver_name": "SVMv2-ES00384-RHOSO_VLD_NAS01-NAS",
+  "total_policies": 2,
+  "policies": [
+    {
+      "policy_name": "default",
+      "policy_id": 17179869185,
+      "rules": [
+        {
+          "index": 1,
+          "clientmatch": "0.0.0.0/0",
+          "rorule": "any",
+          "rwrule": "any",
+          "superuser": "any",
+          "protocols": "nfs3, nfs4, nfs"
+        }
+      ]
+    },
+    {
+      "policy_name": "rhoso",
+      "policy_id": 17179869186,
+      "rules": [
+        {
+          "index": 1,
+          "clientmatch": "192.168.25.0/24",
+          "rorule": "sys",
+          "rwrule": "any",
+          "superuser": "none",
+          "protocols": "nfs3, nfs4, nfs"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "vserver_name": "SVMv2-ES00384-CINDER_VLD_NAS01-NAS",
+  "total_policies": 2,
+  "policies": [
+    {
+      "policy_name": "default",
+      "policy_id": 21474836481,
+      "svm_name": "SVMv2-ES00384-CINDER_VLD_NAS01-NAS"
+    },
+    {
+      "policy_name": "cinder",
+      "policy_id": 21474836482,
+      "svm_name": "SVMv2-ES00384-CINDER_VLD_NAS01-NAS"
+    }
+  ]
+}

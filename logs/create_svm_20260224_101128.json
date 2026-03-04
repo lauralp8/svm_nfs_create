@@ -1,0 +1,14 @@
+{
+  "uuid": "caade9a1-1160-11f1-a019-d039eaccfdc5",
+  "name": "SVMv2-ES00384-CINDER_BCN_NAS01-NAS",
+  "state": "running",
+  "ipspace": "Default",
+  "language": "c.utf_8",
+  "root_volume_security_style": "unix",
+  "aggregates": [
+    {
+      "name": "aggr1_BCNAFF01_01",
+      "uuid": "6ab1d0f5-35fb-437d-82fb-e0484f58c31c"
+    }
+  ]
+}

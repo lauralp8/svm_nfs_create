@@ -1,0 +1,15 @@
+{
+  "vserver_name": "SVMv2-ES00384-CINDER_VLD_NAS01-NAS",
+  "aggr_list": [
+    {
+      "name": "aggr1_VLDAFF01_02",
+      "uuid": "c7955ce6-09fa-45a3-ad0c-b767c1d2e212"
+    },
+    {
+      "name": "aggr1_VLDAFF01_01",
+      "uuid": "7629ba22-668e-4ef2-b145-3986fdb94925"
+    }
+  ],
+  "is_space_reporting_logical": true,
+  "is_space_enforcement_logical": true
+}

@@ -1,0 +1,36 @@
+{
+  "vserver_name": "SVMv2-ES00384-CINDER_BTC_NAS01-NAS",
+  "total_lifs": 2,
+  "lifs": [
+    {
+      "name": "CINDER_BCN_NAS01_NFS_LIF0",
+      "address": "192.168.23.40",
+      "netmask": "24",
+      "home_node": "BCNAFF01-01",
+      "home_port": "a0a-1010",
+      "current_node": "BCNAFF01-01",
+      "current_port": "a0a-1010",
+      "status_admin": "up",
+      "status_oper": "up",
+      "failover": "default",
+      "auto_revert": false,
+      "service_policy": "default-data-files",
+      "services": "data_core, data_nfs, data_fpolicy_client, management_dns_client, management_ad_client, management_ldap_client, management_nis_client, data_dns_server"
+    },
+    {
+      "name": "CINDER_BCN_NAS01_NFS_LIF1",
+      "address": "192.168.25.40",
+      "netmask": "24",
+      "home_node": "BCNAFF01-01",
+      "home_port": "a0a-1010",
+      "current_node": "BCNAFF01-01",
+      "current_port": "a0a-1010",
+      "status_admin": "up",
+      "status_oper": "up",
+      "failover": "default",
+      "auto_revert": false,
+      "service_policy": "default-data-files",
+      "services": "data_core, data_nfs, data_fpolicy_client, management_dns_client, management_ad_client, management_ldap_client, management_nis_client, data_dns_server"
+    }
+  ]
+}

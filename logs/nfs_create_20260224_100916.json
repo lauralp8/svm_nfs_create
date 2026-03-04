@@ -1,0 +1,10 @@
+{
+  "vserver_name": "SVMv2-ES00384-RHOSO_BCN_NAS01-NAS",
+  "enabled": true,
+  "state": "online",
+  "svm_uuid": "788a8133-1160-11f1-a019-d039eaccfdc5",
+  "v3_enabled": true,
+  "v40_enabled": true,
+  "v41_enabled": true,
+  "v41_pnfs_enabled": true
+}

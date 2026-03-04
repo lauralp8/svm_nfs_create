@@ -1,0 +1,15 @@
+{
+  "vserver_name": "SVMv2-ES00384-CINDER_BTC_NAS01-NAS",
+  "aggr_list": [
+    {
+      "name": "aggr1_BCNAFF01_02",
+      "uuid": "ddffff19-e3b1-4c0d-bf50-d93b172c243c"
+    },
+    {
+      "name": "aggr1_BCNAFF01_01",
+      "uuid": "6ab1d0f5-35fb-437d-82fb-e0484f58c31c"
+    }
+  ],
+  "is_space_reporting_logical": true,
+  "is_space_enforcement_logical": true
+}

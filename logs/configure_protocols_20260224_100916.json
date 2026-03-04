@@ -1,0 +1,15 @@
+{
+  "vserver_name": "SVMv2-ES00384-RHOSO_BCN_NAS01-NAS",
+  "vserver_uuid": "788a8133-1160-11f1-a019-d039eaccfdc5",
+  "allowed_protocols": [
+    "nfs",
+    "ndmp"
+  ],
+  "disallowed_protocols": [
+    "cifs",
+    "fcp",
+    "iscsi",
+    "nvme",
+    "s3"
+  ]
+}

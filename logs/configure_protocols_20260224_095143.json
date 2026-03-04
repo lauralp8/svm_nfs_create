@@ -1,0 +1,15 @@
+{
+  "vserver_name": "SVMv2-ES00384-CINDER_VLD_NAS01-NAS",
+  "vserver_uuid": "04a45b56-115e-11f1-94e1-d039eaccac68",
+  "allowed_protocols": [
+    "nfs",
+    "ndmp"
+  ],
+  "disallowed_protocols": [
+    "cifs",
+    "fcp",
+    "iscsi",
+    "nvme",
+    "s3"
+  ]
+}

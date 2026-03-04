@@ -1,0 +1,14 @@
+{
+  "uuid": "04a45b56-115e-11f1-94e1-d039eaccac68",
+  "name": "SVMv2-ES00384-CINDER_VLD_NAS01-NAS",
+  "state": "running",
+  "ipspace": "Default",
+  "language": "c.utf_8",
+  "root_volume_security_style": "unix",
+  "aggregates": [
+    {
+      "name": "aggr1_VLDAFF01_02",
+      "uuid": "c7955ce6-09fa-45a3-ad0c-b767c1d2e212"
+    }
+  ]
+}
