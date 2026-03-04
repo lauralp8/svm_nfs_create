@@ -4,7 +4,7 @@
 
 # CONFIGURACIÓN DE CONEXIÓN AL CLUSTER
 cluster:
-  host: cluster1.demo.netapp.com         
+  host: cluster2.demo.netapp.com         
   username: admin
   password: Netapp1!
 
