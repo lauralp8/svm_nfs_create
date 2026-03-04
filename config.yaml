@@ -12,15 +12,15 @@ cluster:
 svm: 
   name: SVMv2-ES00384-CINDER_BCN_NAS01-NAS
   ipspace: Default
-  aggregate: aggr1_BCNAFF01_01
+  aggregate: aggr0_cluster2_01
   language: c.utf_8
   security_style: unix
   rootvolume: SVMv2-ES00384-C_BCN_NAS01-NAS_root
 
   # Parámetros de modificación
   aggr_list:
-    - aggr1_BCNAFF01_02
-    - aggr1_BCNAFF01_01
+    - aggr0_cluster2_01
+    - aggr0_cluster2_02
   is_space_reporting_logical: true
   is_space_enforcement_logical: true
 
