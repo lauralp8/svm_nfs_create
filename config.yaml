@@ -57,8 +57,8 @@ svm:
             - nfs4
           ruleindex: 1
     
-    # Policy 2: prueba_nfs_export_policy 
-    - policy_name: prueba_nfs_export_policy
+    # Policy 2: rhoso 
+    - policy_name: rhoso
       rules:
         - clientmatch: 192.168.0.217/24
           rorule: sys
