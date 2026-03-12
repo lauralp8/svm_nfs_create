@@ -840,10 +840,11 @@ def export_policies(svm_config):
 
 def export_policy_rules_create(svm_config):
     """
-    Crea reglas de export policy para cada política definida en config.yaml
+    Crea export policies y sus reglas para cada política definida en config.yaml
     
-    Esta función permite configurar múltiples policies con diferentes reglas.
-    Cada policy puede tener atributos completamente diferentes:
+    Esta función primero crea todas las export policies necesarias y luego
+    configura las reglas para cada una. Cada policy puede tener atributos
+    completamente diferentes:
     - 'default' puede tener rorule=any, superuser=any, clientmatch=0.0.0.0/0
     - 'rhoso' puede tener rorule=sys, sin superuser, clientmatch=192.168.25.0/24
     
@@ -851,7 +852,7 @@ def export_policy_rules_create(svm_config):
         svm_config: Diccionario con la configuración de la SVM del config.yaml
     
     Returns:
-        bool: True si todas las reglas se crearon exitosamente, False si hubo error
+        bool: True si todas las policies y reglas se crearon exitosamente, False si hubo error
     """
     try:
         # Extraer nombre de la SVM del config
@@ -868,14 +869,32 @@ def export_policy_rules_create(svm_config):
         
         all_created_rules = []
         
-        # PASO 1: ITERAR POR CADA POLICY (default, rhoso, etc.)
+        # PASO 1: CREAR TODAS LAS EXPORT POLICIES NECESARIAS
+        print(f"\n[*] Ensuring all export policies exist...")
+        for policy_config in export_policy_rules_config:
+            policy_name = policy_config.get('policy_name')
+            
+            # Verificar si la export policy ya existe
+            existing_policy = ExportPolicy.find(name=policy_name, **{'svm.name': svm_name})
+            if existing_policy:
+                print(f"[*] Export policy '{policy_name}' already exists - OK")
+            else:
+                # Crear la export policy
+                print(f"[*] Creating export policy '{policy_name}'...")
+                export_policy = ExportPolicy()
+                export_policy.name = policy_name
+                export_policy.svm = {'name': svm_name}
+                export_policy.post(hydrate=True)
+                print(f"[+] Export policy '{policy_name}' created successfully!")
+        
+        # PASO 2: ITERAR POR CADA POLICY (default, rhoso, etc.)
         for policy_config in export_policy_rules_config:
             policy_name = policy_config.get('policy_name')
             rules = policy_config.get('rules', [])
             
             print(f"\n[*] Processing policy: {policy_name}")
             
-            # PASO 2: ITERAR POR CADA REGLA DE LA POLICY
+            # PASO 3: ITERAR POR CADA REGLA DE LA POLICY
             # Aquí es donde cada policy puede tener atributos diferentes
             for rule_config in rules:
                 # Extraer atributos de la regla (con valores por defecto)
