@@ -40,7 +40,7 @@ svm:
   nfs_v41_pnfs_enabled: true
 
   # Configuración de export policy
-  export_policy_name: prueba_nfs_export_policy
+  export_policy_name: export_policy
 
   # Configuración de export policy rules
   export_policy_rules:
