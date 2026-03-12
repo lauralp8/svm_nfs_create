@@ -60,7 +60,7 @@ svm:
     # Policy 2: rhoso 
     - policy_name: rhoso
       rules:
-        - clientmatch: 192.168.0.217/24
+        - clientmatch: 192.168.0.0/24
           rorule: sys
           rwrule: any
           protocols:
