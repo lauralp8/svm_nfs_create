@@ -4,23 +4,23 @@
 
 # CONFIGURACIÓN DE CONEXIÓN AL CLUSTER
 cluster:
-  host: cluster2.demo.netapp.com         
+  host: cluster1.demo.netapp.com         
   username: admin
   password: Netapp1!
 
 # CONFIGURACIÓN DE LA SVM NFS
 svm: 
-  name: SVMv2-ES00384-CINDER_BCN_NAS01-NAS
+  name: PRUEBA_NFS_SVM
   ipspace: Default
-  aggregate: aggr0_cluster2_01
+  aggregate: cluster1_01_SSD_1
   language: c.utf_8
   security_style: unix
-  rootvolume: SVMv2-ES00384-C_BCN_NAS01-NAS_root
+  rootvolume: PRUEBA_NFS_SVM_root
 
   # Parámetros de modificación
   aggr_list:
-    - aggr0_cluster2_01
-    - aggr0_cluster2_02
+    - cluster1_01_SSD_1
+    - cluster1_02_SSD_1
   is_space_reporting_logical: true
   is_space_enforcement_logical: true
 
@@ -40,7 +40,7 @@ svm:
   nfs_v41_pnfs_enabled: true
 
   # Configuración de export policy
-  export_policy_name: cinder
+  export_policy_name: prueba_nfs_export_policy
 
   # Configuración de export policy rules
   export_policy_rules:
@@ -57,10 +57,10 @@ svm:
             - nfs4
           ruleindex: 1
     
-    # Policy 2: cinder 
-    - policy_name: cinder
+    # Policy 2: prueba_nfs_export_policy 
+    - policy_name: prueba_nfs_export_policy
       rules:
-        - clientmatch: 192.168.25.0/24
+        - clientmatch: 192.168.0.217/24
           rorule: sys
           rwrule: any
           protocols:
@@ -73,32 +73,32 @@ svm:
   # CONFIGURACIÓN NETWORK INTERFACES (LIFs)
   network_interfaces:
     # LIF 1: Interfaz de datos NFS
-    - name: CINDER_BCN_NAS01_NFS_LIF0
+    - name: prueba_nfs_svm_LIF1
       role: data
       data_protocol: nfs
-      home_node: BCNAFF01-01
-      home_port: a0a-1009
-      address: 192.168.23.40
+      home_node: cluster1-01
+      home_port: e0e
+      address: 192.168.0.218
       netmask: 255.255.255.0
       auto_revert: false
 
     # LIF 1: Interfaz de datos NFS
-    - name: _BCN_NAS01_NFS_LIF1
+    - name: prueba_nfs_svm_LIF2
       role: data
       data_protocol: nfs
-      home_node: BCNAFF01-01
-      home_port: a0a-1010
-      address: 192.168.25.40
+      home_node: cluster1-01
+      home_port: e0e
+      address: 192.168.0.219
       netmask: 255.255.255.0
       auto_revert: false
   
     # LIF 2: Interfaz de management
-    #- name: CINDER_BCN_NAS01_MGMT_LIF2
-    #  service_policy: default-management
-    #  address: 192.168.25.39  
-    #  netmask: 255.255.255.0
-    #  home_node: VLDAFF01-01
-    #  home_port: a0a-1010
-    #  broadcast_domain: Default
-    #  status_admin: up
-    #  auto_revert: false
+    - name: prueba_nfs_svm_LIF_MANAGEMENT
+      service_policy: default-management
+      address: 192.168.0.220  
+      netmask: 255.255.255.0
+      home_node: cluster1-01
+      home_port: e0e
+      broadcast_domain: Default
+      status_admin: up
+      auto_revert: false
