@@ -81,16 +81,6 @@ svm:
       address: 192.168.0.218
       netmask: 255.255.255.0
       auto_revert: false
-
-    # LIF 1: Interfaz de datos NFS
-    - name: prueba_nfs_svm_LIF2
-      role: data
-      data_protocol: nfs
-      home_node: cluster1-01
-      home_port: e0e
-      address: 192.168.0.219
-      netmask: 255.255.255.0
-      auto_revert: false
   
     # LIF 2: Interfaz de management
     - name: prueba_nfs_svm_LIF_MANAGEMENT
